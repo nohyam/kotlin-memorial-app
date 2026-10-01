@@ -1,0 +1,50 @@
+<kotlin .gitignore>
+
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Android Studio
+.idea/
+
+# Gradle
+.gradle/
+**/build/
+
+# Native build
+.externalNativeBuild/
+.cxx/
+
+# Android generated files
+captures/
+
+# Signing files
+*.jks
+*.keystore
+keystore.properties
+
+# Build outputs
+*.apk
+*.aab
+
+# Secret configuration
+secrets.properties
+.env
+*.env
+
+# Operating system files
+Thumbs.db
+
+.kotlin/
