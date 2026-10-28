@@ -16,43 +16,66 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import com.nohyam.memorial.ui.screen.component.BasicButton
-import com.nohyam.memorial.ui.theme.BasicPadding
+import com.nohyam.memorial.ui.state.HomeUiState
+import com.nohyam.memorial.ui.state.QuizState
+import com.nohyam.memorial.ui.theme.DefaultPadding
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    homeUiState: HomeUiState,
+    onQuizClick: () -> Unit,
+    onRecordClick: () -> Unit
+) {
+
+    val quizText = when (homeUiState.quizState) {
+        QuizState.NONE -> "퀴즈 없음"
+        QuizState.AVAILABLE -> "퀴즈 있음"
+        QuizState.COMPLETED -> "퀴즈 완료"
+    }
+
     Scaffold(topBar = {
         TopAppBar(
             title = { Text("Memorial") }
         )
     }) { innerPadding ->
-        Column(modifier = Modifier
-            .padding(innerPadding)
-            .fillMaxSize()) {
-            HomeStatusCard("오늘 기록 3개")
-            HomeStatusCard("오늘 퀴즈 있음")
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                BasicButton("기록하기", {})
-                BasicButton("퀴즈풀기", {})
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+        ) {
+            HomeStatusCard("오늘 기록 ${homeUiState.recordCount}개")
+            HomeStatusCard("오늘 $quizText")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                BasicButton("기록하기", onRecordClick)
+                BasicButton("퀴즈풀기", onQuizClick)
             }
         }
     }
 }
 
 @Composable
-fun HomeStatusCard(text : String){
-    Card(modifier = Modifier
-        .fillMaxWidth()
-        .padding(BasicPadding),) {
-        Text(text = text, fontSize = 16.sp, modifier = Modifier.padding(BasicPadding))
+fun HomeStatusCard(text: String) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(DefaultPadding),
+    ) {
+        Text(text = text, fontSize = 16.sp, modifier = Modifier.padding(DefaultPadding))
     }
 }
-
 
 
 @Preview
 @Composable
 fun HomeScreenPreview() {
-    HomeScreen()
+    HomeScreen(
+        homeUiState = HomeUiState(5, QuizState.NONE),
+        {},
+        {}
+    )
 }

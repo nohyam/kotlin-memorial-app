@@ -4,11 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material3.Card
@@ -20,24 +19,37 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.nohyam.memorial.data.entity.RecordEntity
 import com.nohyam.memorial.ui.screen.component.BasicButton
-import com.nohyam.memorial.ui.theme.BasicPadding
+import com.nohyam.memorial.ui.theme.DefaultPadding
 
-private val isCheck: Boolean = false
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun QuizScreen() {
+fun QuizScreen(
+    currentRecord: RecordEntity,
+    currentIndex: Int,
+    isSubmitted: Boolean,
+    totalCount: Int,
+    onNext: (Boolean) -> Unit,
+    submitQuiz: () -> Unit,
+    onPreviousQuiz : () -> Unit,
+    onHomeClick : () -> Unit
+
+    ) {
+    val focusManager = LocalFocusManager.current
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Memorial Quiz") })
         }) { innerPadding ->
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -46,21 +58,25 @@ fun QuizScreen() {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.5f)
                     .align(Alignment.Center)
-                    .padding(BasicPadding)
+                    .padding(DefaultPadding)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(BasicPadding),
+                        .padding(DefaultPadding),
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         IconButton(
-                            onClick = {}
+                            onClick = if (currentIndex > 0){
+                                onPreviousQuiz
+                            } else {
+                                onHomeClick
+                            }
+
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBackIosNew,
@@ -69,12 +85,12 @@ fun QuizScreen() {
                         }
 
                         Text(
-                            "1/4", fontSize = 32.sp,
+                            "${currentIndex + 1}/$totalCount", fontSize = 32.sp,
                         )
                     }
 
                     Text(
-                        "Q. 질문칸입니다.",
+                        "Q. ${currentRecord.question}",
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
@@ -83,44 +99,42 @@ fun QuizScreen() {
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f),
-                        state = rememberTextFieldState(),
+                        state = remember(currentIndex) {
+                            TextFieldState()
+                        },
                         label = { Text("나의 답") },
                     )
 
-                    if (isCheck) {
-                        Text("원래 나의 답", modifier = Modifier.weight(1f))
+                    if (isSubmitted) {
+                        Text(currentRecord.answer)
                         Row(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .weight(1f),
+                                .fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Bottom
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             BasicButton(
                                 label = "기억 안남",
-                                onClick = {},
+                                onClick = { onNext(false) },
                                 modifier = Modifier.weight(1f)
                             )
                             BasicButton(
                                 label = "기억 남",
-                                onClick = {},
+                                onClick = { onNext(true) },
                                 modifier = Modifier.weight(1f)
                             )
                         }
                     } else {
                         Row(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .weight(1f),
+                                .fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Bottom
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            BasicButton(
-                                label = "기억 안남",
-                                onClick = {},
-                                modifier = Modifier.weight(1f)
-                            )
-                            BasicButton(label = "제출", onClick = {}, modifier = Modifier.weight(1f))
+                            BasicButton(label = "제출", onClick = {
+                                focusManager.clearFocus()
+                                submitQuiz()
+                            }, modifier = Modifier.weight(1f))
                         }
                     }
                 }
@@ -132,5 +146,18 @@ fun QuizScreen() {
 @Preview
 @Composable
 fun QuizScreenPreview() {
-    QuizScreen()
+    QuizScreen(
+        currentRecord = RecordEntity(
+            question = "저녁에 뭐먹었지?",
+            answer = "치킨먹었지요",
+            createdAt = System.currentTimeMillis(),
+        ),
+        currentIndex = 0,
+        totalCount = 3,
+        onNext = {},
+        isSubmitted = false,
+        submitQuiz = {},
+        onPreviousQuiz = {},
+        onHomeClick = {}
+    )
 }

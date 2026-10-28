@@ -5,11 +5,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.nohyam.memorial.ui.theme.BasicPadding
+import com.nohyam.memorial.ui.theme.DefaultPadding
 
 @Composable
 fun BasicButton(label: String, onClick : () ->Unit , modifier: Modifier = Modifier){
-    Button(onClick = onClick, modifier = modifier.padding(BasicPadding)) {
+    Button(onClick = onClick, modifier = modifier.padding(DefaultPadding)) {
         Text(label)
     }
 }
