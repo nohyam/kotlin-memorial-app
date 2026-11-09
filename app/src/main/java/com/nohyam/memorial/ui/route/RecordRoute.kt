@@ -1,7 +1,7 @@
 package com.nohyam.memorial.ui.route
 
+import android.widget.Toast
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -22,7 +22,7 @@ import com.nohyam.memorial.ui.screen.RecordScreen
 import com.nohyam.memorial.viewmodel.RecordViewModel
 import com.nohyam.memorial.viewmodel.RecordViewModelFactory
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun RecordRoute(onBackClick: () -> Unit) {
 
@@ -55,19 +55,39 @@ fun RecordRoute(onBackClick: () -> Unit) {
                     viewModel.editRecord(
                         recordEntity = record,
                         question = question,
-                        answer = answer
+                        answer = answer,
+                        onResult = {success ->
+                            if (success){
+                                showBottomSheet = false
+                            }else{
+                                Toast.makeText(
+                                    context,
+                                    "기록 수정에 실패했습니다. 다시 시도해 주세요.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
                     )
-                    showBottomSheet = false
                 },
                 onDismiss = { showBottomSheet = false },
                 initialQuestion = record.question,
-                initialAnswer = record.answer
+                initialAnswer = record.answer,
+                isEditing = true
             )
         }else{
             RecordBottomSheet(
                 onSave = { question, answer ->
-                    viewModel.addRecord(question, answer)
-                    showBottomSheet = false
+                    viewModel.addRecord(question, answer, onResult = {success ->
+                        if (success){
+                            showBottomSheet = false
+                        }else{
+                            Toast.makeText(
+                                context,
+                                "기록 저장에 실패했습니다. 다시 시도해 주세요.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    })
                 },
                 onDismiss = {
                     showBottomSheet = false
@@ -89,8 +109,20 @@ fun RecordRoute(onBackClick: () -> Unit) {
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            showDialog = false
-                            viewModel.deleteRecord(recordEntity = record)
+                            viewModel.deleteRecord(
+                                recordEntity = record,
+                                onResult = { success ->
+                                    if (success) {
+                                        showDialog = false
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            "기록 삭제에 실패했습니다. 다시 시도해 주세요.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            )
                         }
                     ) {
                         Text("확인")

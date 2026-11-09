@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nohyam.memorial.data.entity.RecordEntity
 import com.nohyam.memorial.data.repository.RecordRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,12 +17,13 @@ import java.time.LocalDate
 class RecordViewModel(private val recordRepository: RecordRepository) : ViewModel() {
 
     private val currentDate = MutableStateFlow(LocalDate.now())
-
-    fun refreshDate(){
+    private var isSaving = false
+    fun refreshDate() {
         currentDate.value = LocalDate.now()
     }
-    private val todayRecordFlow= currentDate.flatMapLatest {
-        date -> recordRepository.getTodayRecordList(date)
+
+    private val todayRecordFlow = currentDate.flatMapLatest { date ->
+        recordRepository.getTodayRecordList(date)
     }
 
     val todayRecords = todayRecordFlow.stateIn(
@@ -31,34 +33,75 @@ class RecordViewModel(private val recordRepository: RecordRepository) : ViewMode
     )
 
 
-    fun addRecord(question : String, answer : String){
-        viewModelScope.launch { 
-            recordRepository.addRecord(
-                recordEntity = RecordEntity(
-                    question = question,
-                    answer = answer,
-                    createdAt = System.currentTimeMillis(),
+    fun addRecord(question: String, answer: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            if (isSaving) return@launch
+            isSaving = true
+
+            try {
+                recordRepository.addRecord(
+                    recordEntity = RecordEntity(
+                        question = question,
+                        answer = answer,
+                        createdAt = System.currentTimeMillis(),
+                    )
                 )
-            )
+                onResult(true)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                onResult(false)
+            } finally {
+                isSaving = false
+            }
         }
     }
 
-    fun editRecord(recordEntity: RecordEntity, question: String, answer: String){
+    fun editRecord(
+        recordEntity: RecordEntity,
+        question: String,
+        answer: String,
+        onResult: (Boolean) -> Unit
+    ) {
         viewModelScope.launch {
-            recordRepository.editRecord(
-                recordEntity = recordEntity.copy(
-                    question = question,
-                    answer = answer,
+            if (isSaving) return@launch
+            isSaving = true
+
+            try {
+                recordRepository.editRecord(
+                    recordEntity = recordEntity.copy(
+                        question = question,
+                        answer = answer,
+                    )
                 )
-            )
+                onResult(true)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                onResult(false)
+            } finally {
+                isSaving = false
+            }
         }
     }
 
-    fun deleteRecord(recordEntity: RecordEntity) {
+    fun deleteRecord(recordEntity: RecordEntity, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            recordRepository.deleteRecord(
-                recordEntity = recordEntity
-            )
+            if (isSaving) return@launch
+            isSaving = true
+
+            try {
+                recordRepository.deleteRecord(
+                    recordEntity = recordEntity
+                )
+                onResult(true)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                onResult(false)
+            } finally {
+                isSaving = false
+            }
         }
     }
 }

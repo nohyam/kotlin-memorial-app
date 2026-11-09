@@ -1,5 +1,6 @@
 package com.nohyam.memorial.ui.route
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -87,10 +88,20 @@ fun QuizRoute(onHomeClick: () -> Unit) {
                     currentIndex = currentIndex,
                     isSubmitted = isSubmitted,
                     totalCount = state.records.size,
-                    onNext = { isRemembered -> viewModel.evaluateCurrentQuiz(isRemembered) },
+                    onNext = { isRemembered ->
+                        viewModel.evaluateCurrentQuiz(
+                            isRemembered,
+                            onSaveError = {
+                                Toast.makeText(
+                                    context,
+                                    "퀴즈 결과 저장에 실패했습니다. 다시 시도해 주세요.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            })
+                    },
                     submitQuiz = { viewModel.submitQuiz() },
                     onPreviousQuiz = { viewModel.previousQuiz() },
-                    onHomeClick = {showDialog = true}
+                    onHomeClick = { showDialog = true }
                 )
                 BackHandler(enabled = true) {
                     showDialog = true

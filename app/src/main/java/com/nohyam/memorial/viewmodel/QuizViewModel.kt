@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import kotlin.coroutines.cancellation.CancellationException
 
 class QuizViewModel(private val recordRepository: RecordRepository) : ViewModel() {
     private val quizListFlow = recordRepository.getYesterdayRecordList(LocalDate.now())
@@ -40,26 +41,42 @@ class QuizViewModel(private val recordRepository: RecordRepository) : ViewModel(
 
     val quizState = quizUiState
 
-    fun evaluateCurrentQuiz(isRemembered: Boolean) {
+
+    private var isSaving = false
+
+    fun evaluateCurrentQuiz(
+        isRemembered: Boolean,
+        onSaveError: () -> Unit
+    ) {
+        if (isSaving) return
 
         val state = quizState.value
 
-        if (state is QuizUiState.Success) {
+        if (state is QuizUiState.Success && !state.isCompleted) {
             val quizId = state.records[state.currentIndex].id
-
             results[quizId] = isRemembered
 
             if (state.currentIndex == state.records.lastIndex) {
+                isSaving = true
+
                 viewModelScope.launch {
-                    val updatesRecords = state.records.map { record ->
-                        record.copy(
-                            isRemembered = results[record.id] ?: record.isRemembered
-                        )
+                    try {
+                        val updatedRecords = state.records.map { record ->
+                            record.copy(
+                                isRemembered = results[record.id] ?: record.isRemembered
+                            )
+                        }
+
+                        recordRepository.saveRecordList(updatedRecords)
+                        completed.value = true
+
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        onSaveError()
+                    } finally {
+                        isSaving = false
                     }
-
-                    recordRepository.saveRecordList(updatesRecords)
-
-                    completed.value = true
                 }
             } else {
                 isSubmitted.value = false
@@ -67,6 +84,7 @@ class QuizViewModel(private val recordRepository: RecordRepository) : ViewModel(
             }
         }
     }
+
 
     fun submitQuiz() {
         isSubmitted.value = true
@@ -78,4 +96,5 @@ class QuizViewModel(private val recordRepository: RecordRepository) : ViewModel(
             isSubmitted.value = false
         }
     }
+
 }
